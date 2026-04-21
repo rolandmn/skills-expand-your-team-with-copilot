@@ -574,7 +574,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="share-icon">🔗</span> Share
         </button>
         <div class="share-menu hidden">
-          <a class="share-option share-twitter" href="#" target="_blank" rel="noopener noreferrer">𝕏 Twitter</a>
+          <a class="share-option share-twitter" href="#" target="_blank" rel="noopener noreferrer">𝕏 X</a>
           <a class="share-option share-facebook" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
           <button class="share-option share-copy">📋 Copy Link</button>
         </div>
@@ -610,7 +610,13 @@ document.addEventListener("DOMContentLoaded", () => {
     shareButton.addEventListener("click", (event) => {
       event.stopPropagation();
       if (navigator.share) {
-        navigator.share({ title: name, text: shareText, url: shareUrl }).catch(() => {});
+        navigator.share({ title: name, text: shareText, url: shareUrl }).catch(() => {
+          // If native share fails, fall back to the share menu
+          document.querySelectorAll(".share-menu:not(.hidden)").forEach((menu) => {
+            if (menu !== shareMenu) menu.classList.add("hidden");
+          });
+          shareMenu.classList.remove("hidden");
+        });
       } else {
         // Close any other open share menus
         document.querySelectorAll(".share-menu:not(.hidden)").forEach((menu) => {
@@ -624,13 +630,32 @@ document.addEventListener("DOMContentLoaded", () => {
     shareFacebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
 
     shareCopy.addEventListener("click", () => {
-      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
-        shareCopy.textContent = "✅ Copied!";
+      const textToCopy = `${shareText}\n${shareUrl}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          shareCopy.textContent = "✅ Copied!";
+          setTimeout(() => { shareCopy.textContent = "📋 Copy Link"; }, 2000);
+        }).catch(() => {
+          shareCopy.textContent = "❌ Failed";
+          setTimeout(() => { shareCopy.textContent = "📋 Copy Link"; }, 2000);
+        });
+      } else {
+        // Fallback for non-secure contexts
+        const textarea = document.createElement("textarea");
+        textarea.value = textToCopy;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand("copy");
+          shareCopy.textContent = "✅ Copied!";
+        } catch {
+          shareCopy.textContent = "❌ Failed";
+        }
+        document.body.removeChild(textarea);
         setTimeout(() => { shareCopy.textContent = "📋 Copy Link"; }, 2000);
-      }).catch(() => {
-        shareCopy.textContent = "❌ Failed";
-        setTimeout(() => { shareCopy.textContent = "📋 Copy Link"; }, 2000);
-      });
+      }
     });
 
     activitiesList.appendChild(activityCard);
