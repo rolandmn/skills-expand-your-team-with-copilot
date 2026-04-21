@@ -569,6 +569,16 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-container">
+        <button class="share-button" aria-label="Share this activity">
+          <span class="share-icon">🔗</span> Share
+        </button>
+        <div class="share-menu hidden">
+          <a class="share-option share-twitter" href="#" target="_blank" rel="noopener noreferrer">𝕏 Twitter</a>
+          <a class="share-option share-facebook" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <button class="share-option share-copy">📋 Copy Link</button>
+        </div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -586,6 +596,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add share button functionality
+    const shareButton = activityCard.querySelector(".share-button");
+    const shareMenu = activityCard.querySelector(".share-menu");
+    const shareTwitter = activityCard.querySelector(".share-twitter");
+    const shareFacebook = activityCard.querySelector(".share-facebook");
+    const shareCopy = activityCard.querySelector(".share-copy");
+
+    const shareText = `Check out "${name}" at Mergington High School! ${details.description}`;
+    const shareUrl = window.location.href;
+
+    shareButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (navigator.share) {
+        navigator.share({ title: name, text: shareText, url: shareUrl }).catch(() => {});
+      } else {
+        // Close any other open share menus
+        document.querySelectorAll(".share-menu:not(.hidden)").forEach((menu) => {
+          if (menu !== shareMenu) menu.classList.add("hidden");
+        });
+        shareMenu.classList.toggle("hidden");
+      }
+    });
+
+    shareTwitter.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    shareFacebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+
+    shareCopy.addEventListener("click", () => {
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+        shareCopy.textContent = "✅ Copied!";
+        setTimeout(() => { shareCopy.textContent = "📋 Copy Link"; }, 2000);
+      }).catch(() => {
+        shareCopy.textContent = "❌ Failed";
+        setTimeout(() => { shareCopy.textContent = "📋 Copy Link"; }, 2000);
+      });
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -671,6 +717,12 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("click", (event) => {
     if (event.target === registrationModal) {
       closeRegistrationModalHandler();
+    }
+    // Close any open share menus when clicking outside
+    if (!event.target.closest(".share-container")) {
+      document.querySelectorAll(".share-menu:not(.hidden)").forEach((menu) => {
+        menu.classList.add("hidden");
+      });
     }
   });
 
