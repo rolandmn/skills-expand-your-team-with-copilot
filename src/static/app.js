@@ -876,10 +876,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.documentElement.setAttribute("data-theme", "dark");
       themeIcon.textContent = "☀️";
       themeLabel.textContent = "Light Mode";
+      darkModeToggle.setAttribute("aria-label", "Switch to light mode");
     } else {
       document.documentElement.removeAttribute("data-theme");
       themeIcon.textContent = "🌙";
       themeLabel.textContent = "Dark Mode";
+      darkModeToggle.setAttribute("aria-label", "Switch to dark mode");
     }
   }
 
